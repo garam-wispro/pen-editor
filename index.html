@@ -647,21 +647,67 @@ function zipStore(files,pw){const flag=0x0800|(pw?1:0);
   const cs=cen.reduce((a,x)=>a+x.length,0),e=new Uint8Array(22),ev=new DataView(e.buffer);
   ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);ev.setUint32(12,cs,true);ev.setUint32(16,off,true);
   return new Blob([...parts,...cen,e],{type:'application/zip'})}
-const pngOf=c=>new Promise((res,rej)=>c.toBlob(b=>b?b.arrayBuffer().then(a=>res(new Uint8Array(a)),rej):rej(new Error('이미지를 만들지 못했습니다')),'image/png'));
-const DPI=1200; // 인쇄용 파일 해상도
+const DPI=1200; // 대지에 들어가는 문구 이미지의 해상도
 const ZIP_PW='123123'; // 내려받는 ZIP의 압축 암호
 const SANS='"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif';
-// 인쇄용: 볼펜 전체 길이 × 몸통 지름 크기의 투명 판 위에 문구만, 실제 위치·크기·색으로
-function printCanvas(p){const k=DPI/25.4,c=document.createElement('canvas');c.width=Math.round(PEN.L*k);c.height=Math.round(PEN.R*2*k);
-  drawText(c.getContext('2d'),k,0,c.height/2,p);return c}
-// 시안: 회색 바탕에 볼펜을 한 줄씩, 위에 수량과 사양
-function proofCanvas(items,head){const k=10,W=1720,rh=215,top=150,c=document.createElement('canvas');c.width=W;c.height=top+items.length*rh+30;
+const BOARD={w:145,h:10}; // 대지 크기(mm). 인쇄 영역(점선 자리)이 대지 정가운데에 온다
+function toRgb(c){const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,rgb=new Uint8Array(c.width*c.height*3);
+  for(let i=0,j=0;i<d.length;i+=4){rgb[j++]=d[i];rgb[j++]=d[i+1];rgb[j++]=d[i+2]}return{rgb,w:c.width,h:c.height}}
+function textImg(t,px){const c=document.createElement('canvas'),font=`700 ${px}px ${SANS}`;
+  let x=c.getContext('2d');x.font=font;c.width=Math.ceil(x.measureText(t).width+px*.5);c.height=Math.ceil(px*1.5);
+  x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#000';x.font=font;x.textBaseline='middle';x.fillText(t,px*.25,c.height/2+px*.04);
+  return toRgb(c)}
+// 대지에 놓을 문구 이미지: 흰 바탕에 문구(스티커 포함)만. 흰색 글씨는 흰 대지에서 보이지 않으므로 검정으로 바꿔 넣는다
+const isWhite=p=>txtCol(p).hex.toLowerCase()==='#ffffff';
+function artOf(p){const k=DPI/25.4,q=isWhite(p)?{...p,tcolor:'c1'}:p,wmm=Math.min(BOARD.w,textW(q,effSize(q))+4),hmm=8,c=document.createElement('canvas');
+  c.width=Math.round(wmm*k);c.height=Math.round(hmm*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  drawText(x,k,c.width/2-textCx(q)*k,c.height/2,q);
+  return{im:toRgb(c),wmm,hmm,cx:(BOARD.w-(ZONE.x1-ZONE.x0))/2+textCx(q)-ZONE.x0}} // cx = 대지 왼쪽 끝에서 문구 가운데까지(mm)
+// 예시 이미지: 회색 바탕에 볼펜을 한 줄씩, 위에 색 이름과 수량
+function proofCanvas(items,head){const k=6,W=1000,rh=122,top=70,c=document.createElement('canvas');c.width=W;c.height=top+items.length*rh+16;
   const x=c.getContext('2d');x.fillStyle='#6a6a6a';x.fillRect(0,0,W,c.height);
-  x.fillStyle='#fff';x.textBaseline='middle';x.font='700 40px '+SANS;x.fillText(head,60,72);
-  items.forEach((it,i)=>{const y=top+i*rh,p=it.p;x.fillStyle='#fff';x.textAlign='left';x.textBaseline='middle';x.font='700 36px '+SANS;
-    x.fillText(`${it.no}번   ${it.q}개   ·   ${penCol(p).ko}  ·  글씨 ${tname(p)}  ·  ${fontOf(p).ko}  ·  ${posOf(p).ko}`,60,y+26);
-    drawPen(x,k,(W-PEN.L*k)/2,y+62+(PH-PEN.R)*k,p)});
+  x.fillStyle='#fff';x.textBaseline='middle';x.font='700 24px '+SANS;x.fillText(head,(W-PEN.L*k)/2,36);
+  items.forEach((it,i)=>{const y=top+i*rh,p=it.p;x.fillStyle='#fff';x.textAlign='left';x.textBaseline='middle';x.font='700 22px '+SANS;
+    x.fillText(`${it.no}  ${penCol(p).ko} ${it.q}개`,(W-PEN.L*k)/2,y+13);
+    drawPen(x,k,(W-PEN.L*k)/2,y+30+(PH-PEN.R)*k,p)});
   return c}
+// 일러스트레이터에서 열리는 EPS: 그림(rasters)과 대지(boards)를 좌표대로 놓는다. 단위 pt, y는 위쪽이 +, 그림의 (x,y)와 대지의 (x1,y1)은 왼쪽 위 모서리
+function buildEps(Wt,Ht,rasters,boards,title){
+  const cx=Wt/2,cy=Ht/2,OX=8191.5-cx,OY=8191.5+cy;
+  const f=v=>String(Math.round(v*1e4)/1e4),g=v=>String(Math.round(v*1e8)/1e8);
+  const uuid=()=>'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));
+  const te=new TextEncoder(),parts=[];let txt='';
+  const flush=()=>{if(txt){parts.push(te.encode(txt));txt=''}},L=s=>{txt+=s+'\r\n'};
+  const raster=({im,x,y,w,h})=>{const m=`[ ${g(w/im.w)} 0 0 ${g(h/im.h)} ${f(x)} ${f(y)} ]`;
+    L('0 A');L('%AI5_File:');L('%AI5_BeginRaster');L('/DeviceRGB XN');
+    L(`${m} ${im.w} ${im.h} 0 Xh`);L(`${m} 0 0 ${im.w} ${im.h} ${im.w} ${im.h} 8 3 0 1 1 0 4 4 0 0`);
+    L(`%%BeginData: ${im.rgb.length+4}`);txt+='XI\n';flush();parts.push(im.rgb);
+    L('%%EndData');L('XH');L('%AI5_EndRaster');L('N')};
+  L('%!PS-Adobe-3.0 EPSF-3.0');L('%%Creator: Adobe Illustrator(R) 24.0');L('%%AI8_CreatorVersion: 24.0.0');L(`%%Title: (${title})`);
+  L(`%%BoundingBox: 0 0 ${Math.ceil(Wt)} ${Math.ceil(Ht)}`);L(`%%HiResBoundingBox: 0 0 ${f(Wt)} ${f(Ht)}`);
+  L('%%DocumentProcessColors: Cyan Magenta Yellow Black');L('%AI5_FileFormat 14.0');L('%AI3_ColorUsage: Color');L('%AI7_ImageSettings: 0');
+  L(`%AI3_Cropmarks: ${f(boards[0].x1)} ${f(boards[0].y2)} ${f(boards[0].x2)} ${f(boards[0].y1)}`);
+  L(`%AI3_TemplateBox: ${f(cx)} ${f(cy)} ${f(cx)} ${f(cy)}`);L('%AI3_DocumentPreview: None');L('%AI5_ArtSize: 14400 14400');L('%AI5_RulerUnits: 1');
+  L('%AI24_LargeCanvasScale: 1');L('%AI9_ColorModel: 1');L('%AI5_ArtFlags: 0 0 0 1 0 0 1 0 0');L('%AI5_TargetResolution: 800');L('%AI5_NumLayers: 1');
+  L('%AI5_OpenViewLayers: 7');L('%%PageOrigin:0 0');L('%AI9_Flatten: 1');L('%AI12_CMSettings: 00.MS');L('%%EndComments');
+  L('%%BeginProlog');L('%%EndProlog');L('%%BeginSetup');
+  L('%AI9_BeginDocumentData');L('%_/Document :');L('%_/Dictionary :');L('%_16383 /Int (AIDocumentCanvasSize) ,');L('%_/Array :');
+  boards.forEach((b,i)=>{L('%_/Dictionary :');L(`%_(${uuid()}) /String (ArtboardUUID) ,`);L(`%_${i?0:1} /Bool (IsArtboardSelected) ,`);L('%_0 /Int (DisplayMark) ,');
+    L(`%_${f(b.x2)} ${f(b.y2)} /RealPointRelToROrigin`);L('%_ (PositionPoint2) ,');L(`%_${f(b.x1)} ${f(b.y1)} /RealPointRelToROrigin`);L('%_ (PositionPoint1) ,');
+    L(`%_${f(OX+b.x1)} ${f(OY-b.y1)} /RealPoint`);L('%_ (RulerOrigin) ,');L('%_0 /Bool (IsArtboardDefaultName) ,');L(`%_(${b.name}) /UnicodeString (Name) ,`);L('%_1 /Real (PAR) ,');L('%_; ,')});
+  L('%_; (ArtboardArray) ,');L('%_1 /Int (CropAreaActive) ,');L('%_; /Recorded ,');L('%_/Dictionary : /NotRecorded ,');L(`%_${boards.length} /Int (LastArtboardID) ,`);
+  L('%_0 /Bool (AISaveMultipleArtboards) ,');L('%_; /NotRecorded ,');L('%_;');L('%AI9_EndDocumentData');L('%%EndSetup');
+  L('%AI5_BeginLayer');L('1 1 1 1 0 0 1 0 79 128 255 0 50 0 Lb');L('(Layer 1) Ln');L('0 A');
+  rasters.forEach(raster);
+  L('LB');L('%AI5_EndLayer--');L('%%PageTrailer');L('gsave annotatepage grestore showpage');L('%%Trailer');L('%%EOF');flush();
+  let n=0;for(const q of parts)n+=q.length;const out=new Uint8Array(n);let o=0;for(const q of parts){out.set(q,o);o+=q.length}return out}
+// 한 장 배치: 맨 위에 예시 이미지, 그 아래로 볼펜마다 [설명 한 줄 + 145×10mm 대지]. 문구는 인쇄 영역이 대지 정가운데에 오는 자리에 놓인다
+function buildPenEps(proof,arts){const MM=72/25.4,AW=BOARD.w*MM,AH=BOARD.h*MM,PW=AW+60,pad=24,Wt=PW+pad*2,ph=PW*proof.h/proof.w,LH=9,G1=30,G2=5,G3=14;
+  const Ht=pad+ph+G1+arts.length*(LH+G2+AH+G3)+pad-G3,bx=(Wt-AW)/2,rasters=[{im:proof,x:pad,y:Ht-pad,w:PW,h:ph}],boards=[];let y=Ht-pad-ph-G1;
+  for(const a of arts){rasters.push({im:a.label,x:bx,y,w:a.label.w*LH/a.label.h,h:LH});y-=LH+G2;
+    boards.push({x1:bx,y1:y,x2:bx+AW,y2:y-AH,name:a.name});
+    rasters.push({im:a.im,x:bx+(a.cx-a.wmm/2)*MM,y:y-(BOARD.h-a.hmm)/2*MM,w:a.wmm*MM,h:a.hmm*MM});y-=AH+G3}
+  return buildEps(Wt,Ht,rasters,boards,'pen')}
 function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000)}
 // PC는 바로 저장. 휴대폰은 만든 뒤 버튼을 직접 눌러 저장·공유하게 한다(자동 저장이 막히는 기기 대비).
 function deliver(blob,name){if(!COARSE)return download(blob,name);
@@ -678,26 +724,26 @@ async function exportAll(){
   if(!items.length)return alert('내보낼 내용이 없습니다. 인쇄할 문구를 먼저 입력해 주세요.');
   if(!name){alert('주문자명을 입력해 주세요.');$('#oname').focus();return}
   if(!ono){alert('주문번호를 입력해 주세요.');$('#ono').focus();return}
+  if(items.length>120)return alert('한 번에 저장할 수 있는 볼펜은 120종까지입니다. 나누어 저장해 주세요.');
   busy=true;$('#expAll').disabled=true;
-  try{const t=totals(),sum=sumText(t),n=new Date(),p2=v=>String(v).padStart(2,'0'),base=`볼펜_${name}_${ono}_${t.kinds}종_${t.total}개`,files=[],rows=[];
+  try{const t=totals(),sum=sumText(t),n=new Date(),p2=v=>String(v).padStart(2,'0'),base=`볼펜_${name}_${ono}_${t.kinds}종_${t.total}개`,arts=[],rows=[];
     status('글씨체 준비 중…');
     try{await Promise.all(items.flatMap(it=>[document.fonts.load(fontCss(fontOf(it.p),40),it.p.text),...(hasSticker(it.p)?[document.fonts.load(emoCss(40),it.p.text)]:[])]))}catch{}
     // 스티커 글꼴이 없으면 기기마다 다른 그림이 인쇄 파일에 들어가므로 막는다
     if(items.some(it=>hasSticker(it.p)&&!document.fonts.check(emoCss(40),it.p.text)))throw new Error('스티커 글꼴을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
-    const N=30,sheets=Math.ceil(items.length/N); // 시안은 30종마다 한 장
-    for(let s=0;s<sheets;s++){status(`시안 만드는 중… ${s+1} / ${sheets}`);await tick();
-      files.push({name:`${base}_시안${sheets>1?'_'+(s+1):''}.png`,data:await pngOf(proofCanvas(items.slice(s*N,s*N+N),`주문자 ${name}  ·  주문번호 ${ono}  ·  ${sum}`))})}
-    for(let i=0;i<items.length;i++){const {p,no,q}=items[i],fn=`인쇄/${no}_${penCol(p).ko}_${posOf(p).ko}_글씨${txtCol(p).no}번_${q}개.png`;
-      status(`인쇄 파일 만드는 중… ${i+1} / ${items.length}`);await tick();
-      files.push({name:fn,data:await pngOf(printCanvas(p))});
-      rows.push(`${no}번 | ${penCol(p).ko} | ${p.text} | ${fontOf(p).ko} | ${tname(p)} | ${posOf(p).ko} | ${effSize(p).toFixed(1)}mm | ${hasSticker(p)?(p.scol==='text'?'글씨 색':'원래 색'):'-'} | ${q}개 | ${fn}`)}
+    status('예시 이미지 만드는 중…');await tick();
+    const proof=toRgb(proofCanvas(items,`주문자 ${name}  ·  주문번호 ${ono}  ·  ${sum}`));
+    for(let i=0;i<items.length;i++){const {p,no,q}=items[i],bn=`${no}_${penCol(p).ko}_${q}개`,tc=tname(p)+(isWhite(p)?'(대지에는 검정으로 표시)':'');
+      status(`대지 만드는 중… ${i+1} / ${items.length}`);await tick();
+      arts.push({...artOf(p),name:bn,label:textImg(`${no}  ${penCol(p).ko} ${q}개  ·  글씨 ${tc}  ·  ${fontOf(p).ko}  ·  ${posOf(p).ko}`,40)});
+      rows.push(`${no}번 | ${penCol(p).ko} | ${p.text} | ${fontOf(p).ko} | ${tc} | ${posOf(p).ko} | ${effSize(p).toFixed(1)}mm | ${hasSticker(p)?(p.scol==='text'?'글씨 색':'원래 색'):'-'} | ${q}개 | ${bn}`)}
     status('파일로 묶는 중…');await tick();
     const sheet=['[볼펜 주문 내역]',`주문자명: ${name}`,`주문번호: ${ono}`,`작성일시: ${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())} ${p2(n.getHours())}:${p2(n.getMinutes())}`,
       '인쇄: 옆면 한쪽, 문구 1줄',`합계: ${sum}`,
-      `인쇄 파일: 가로 ${PEN.L}mm(볼펜 전체 길이, 왼쪽이 펜촉) × 세로 ${PEN.R*2}mm(몸통 지름), ${DPI}dpi, 배경 투명. 문구가 실제 위치·크기·색으로 들어 있습니다.`,
-      `인쇄 영역: 펜촉 끝에서 ${ZONE.x0}~${ZONE.x1}mm, 세로 ${ZONE.h}mm. 앞 = 왼쪽 끝 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝 맞춤 (끝 여백 ${ZONE.pad}mm)`,'',
-      '번호 | 볼펜 색 | 문구 | 글씨체 | 글씨 색 | 위치 | 글자 크기 | 스티커 색 | 수량 | 인쇄 파일',...rows,''].join('\r\n');
-    files.push({name:'주문내역.txt',data:new TextEncoder().encode('﻿'+sheet)});
+      `EPS: 맨 위에 예시 이미지, 아래에 볼펜마다 대지 1개(${BOARD.w}×${BOARD.h}mm). 인쇄 영역(${ZONE.x1-ZONE.x0}×${ZONE.h}mm)이 대지 정가운데에 오도록 문구를 놓았습니다. 문구 이미지 ${DPI}dpi.`,
+      '위치: 앞 = 인쇄 영역 왼쪽 끝(펜촉 쪽) 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝(클립 쪽) 맞춤','흰색 글씨는 흰 대지에서 보이지 않아 검정으로 넣었습니다.','',
+      '번호 | 볼펜 색 | 문구 | 글씨체 | 글씨 색 | 위치 | 글자 크기 | 스티커 색 | 수량 | 대지 이름',...rows,''].join('\r\n');
+    const files=[{name:base+'.eps',data:buildPenEps(proof,arts)},{name:'주문내역.txt',data:new TextEncoder().encode('﻿'+sheet)}];
     deliver(zipStore(files,ZIP_PW),base+'.zip');status('저장이 끝났습니다. 내려받은 ZIP 파일을 주문하신 곳으로 보내 주세요.')}
   catch(err){status('');alert('내보내기 실패: '+err.message)}
   finally{busy=false;$('#expAll').disabled=false}}
