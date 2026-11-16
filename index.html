@@ -325,8 +325,9 @@ const PEN_COLORS=[
   {id:'ppurple',ko:'파스텔퍼플',hex:'#dcc4ee'},
   {id:'white',ko:'화이트',hex:'#f7f6f4'}];
 // 글씨 색: 색 계열 10가지 × 5단계(진한 → 파스텔) = 50색, 그 아래 그라데이션 10종. 화면 한 줄 = 10칸, no = 주문서에 찍히는 번호
+const WHITE='#fffffa'; // 완전한 흰색은 쓰지 않는다. 화이트 = 옐로우 2% (C0 M0 Y2 K0)
 const HUES=[
-  {ko:'그레이',c:['#111111','#4a4a4a','#8a8a8a','#c4c4c4','#ffffff'],names:['블랙','차콜','그레이','라이트그레이','화이트']},
+  {ko:'그레이',c:['#111111','#4a4a4a','#8a8a8a','#c4c4c4',WHITE],names:['블랙','차콜','그레이','라이트그레이','화이트']},
   {ko:'레드',c:['#7f1d1d','#c81e1e','#ef4444','#f87171','#fecaca']},
   {ko:'핑크',c:['#9d174d','#db2777','#f472b6','#f9a8d4','#fce7f3']},
   {ko:'오렌지',c:['#9a3412','#ea580c','#fb923c','#fdba74','#ffedd5']},
@@ -657,9 +658,8 @@ function textImg(t,px){const c=document.createElement('canvas'),font=`700 ${px}p
   let x=c.getContext('2d');x.font=font;c.width=Math.ceil(x.measureText(t).width+px*.5);c.height=Math.ceil(px*1.5);
   x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#000';x.font=font;x.textBaseline='middle';x.fillText(t,px*.25,c.height/2+px*.04);
   return toRgb(c)}
-// 대지에 놓을 문구 이미지: 흰 바탕에 문구(스티커 포함)만. 흰색 글씨는 흰 대지에서 보이지 않으므로 검정으로 바꿔 넣는다
-const isWhite=p=>txtCol(p).hex.toLowerCase()==='#ffffff';
-function artOf(p){const k=DPI/25.4,q=isWhite(p)?{...p,tcolor:'c1'}:p,wmm=Math.min(BOARD.w,textW(q,effSize(q))+4),hmm=8,c=document.createElement('canvas');
+// 대지에 놓을 문구 이미지(윤곽선을 만들 수 없을 때만 쓴다): 흰 바탕에 문구(스티커 포함)만
+function artOf(p){const k=DPI/25.4,q=p,wmm=Math.min(BOARD.w,textW(q,effSize(q))+4),hmm=8,c=document.createElement('canvas');
   c.width=Math.round(wmm*k);c.height=Math.round(hmm*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
   drawText(x,k,c.width/2-textCx(q)*k,c.height/2,q);
   return{im:toRgb(c),wmm,hmm,cx:(BOARD.w-(ZONE.x1-ZONE.x0))/2+textCx(q)-ZONE.x0}} // cx = 대지 왼쪽 끝에서 문구 가운데까지(mm)
@@ -703,7 +703,7 @@ function parseD(d){const t=d.match(/[MLCZ]|-?\d*\.?\d+/g),out=[];let i=0,cmd;
     const n=cmd==='C'?6:2,v=t.slice(i,i+n).map(Number);i+=n;out.push(cmd==='C'?{type:'C',x1:v[0],y1:v[1],x2:v[2],y2:v[3],x:v[4],y:v[5]}:{type:cmd,x:v[0],y:v[1]})}return out}
 const moveCmds=(cmds,a,dx,dy)=>cmds.map(c=>{const o={type:c.type};for(const k of['x','x1','x2'])if(c[k]!=null)o[k]=c[k]*a+dx;for(const k of['y','y1','y2'])if(c[k]!=null)o[k]=c[k]*a+dy;return o});
 // 볼펜 한 종의 문구를 윤곽선으로: 좌표는 대지 기준 mm(왼쪽 위가 0,0). 색이 같은 것끼리 한 덩어리(layer)로 묶는다
-async function vectorArt(p){const q=isWhite(p)?{...p,tcolor:'c1'}:p,s=effSize(q),f=fontOf(q),col=txtCol(q),parts=[];let W=0;
+async function vectorArt(p){const q=p,s=effSize(q),f=fontOf(q),col=txtCol(q),parts=[];let W=0;
   for(const r of runsOf(q.text)){const key=emoKey(r.t),own=r.e&&q.scol!=='text'&&STKC[key],v=r.e&&STKV[key];let part;
     if(v){const adv=s*ST.s*VW;part={adv,cmds:moveCmds(parseD(v.d),s*ST.s*.46,adv/2,0)}}
     else{const o=await outlineText(r.t,r.e?['Noto Emoji']:[f.fam,'Noto Sans KR'],r.e?400:f.w,r.e?s*ST.s:s);if(!o)return null;
@@ -751,7 +751,8 @@ function buildEps(Wt,Ht,items,boards,title){
   L('%_0 /Bool (AISaveMultipleArtboards) ,');L('%_; /NotRecorded ,');L('%_;');L('%AI9_EndDocumentData');L('%%EndSetup');
   L('%AI5_BeginLayer');L('1 1 1 1 0 0 1 0 79 128 255 0 50 0 Lb');L('(Layer 1) Ln');L('0 A');
   // 윤곽선: 색이 같은 선들을 컴파운드 패스 하나로. 색은 CMYK와 RGB를 함께 적는다
-  const col7=hex=>{const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,gr=(n>>8&255)/255,b=(n&255)/255,k=1-Math.max(r,gr,b),d=1-k||1;return[(1-r-k)/d,(1-gr-k)/d,(1-b-k)/d,k,r,gr,b].map(g).join(' ')};
+  const col7=hex=>{if(hex.toLowerCase()===WHITE)return'0 0 0.02 0 1 1 '+g(250/255); // 화이트 = 옐로우 2%
+    const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,gr=(n>>8&255)/255,b=(n&255)/255,k=1-Math.max(r,gr,b),d=1-k||1;return[(1-r-k)/d,(1-gr-k)/d,(1-b-k)/d,k,r,gr,b].map(g).join(' ')};
   const pathOps=(subs,end)=>{for(const sp of subs){for(const c of sp)L(c.t==='M'?`${f(c.x)} ${f(c.y)} m`:c.t==='L'?`${f(c.x)} ${f(c.y)} L`:`${f(c.x1)} ${f(c.y1)} ${f(c.x2)} ${f(c.y2)} ${f(c.x)} ${f(c.y)} C`);end.forEach(L)}};
   const vector=it=>{L('0 A');L('*u');L('0 O');L(col7(it.hex)+' Xa');L('0 XR');pathOps(it.subs,['f']);L('*U')};
   const clip=it=>{L('q');L('0 A');L('*u');L('0 XR');pathOps(it.subs,['h','W','n']);L('*U');raster(it.ras);L('Q')}; // 그라데이션: 색 띠 그림을 글자 모양으로 오려 낸다
@@ -795,7 +796,7 @@ async function exportAll(){
     status('윤곽선 도구 준비 중…');let canVec=true;try{await loadLibs()}catch{canVec=false}
     status('예시 이미지 만드는 중…');await tick();
     const proof=toRgb(proofCanvas(items,`주문자 ${name}  ·  주문번호 ${ono}  ·  ${sum}`));
-    for(let i=0;i<items.length;i++){const {p,no,q}=items[i],bn=`${no}_${penCol(p).ko}_${q}개`,tc=tname(p)+(isWhite(p)?'(대지에는 검정으로 표시)':'');
+    for(let i=0;i<items.length;i++){const {p,no,q}=items[i],bn=`${no}_${penCol(p).ko}_${q}개`,tc=tname(p);
       status(`대지 만드는 중… ${i+1} / ${items.length}`);await tick();
       let art=null;if(canVec)try{art=await vectorArt(p)}catch{}
       const how=art?'윤곽선':'이미지';if(!art)art=artOf(p); // 윤곽선을 못 만들면(글꼴에 없는 글자 등) 이미지로 넣는다
@@ -805,7 +806,7 @@ async function exportAll(){
     const sheet=['[볼펜 주문 내역]',`주문자명: ${name}`,`주문번호: ${ono}`,`작성일시: ${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())} ${p2(n.getHours())}:${p2(n.getMinutes())}`,
       '인쇄: 옆면 한쪽, 문구 1줄',`합계: ${sum}`,
       `EPS: 맨 위에 예시 이미지, 아래에 볼펜마다 대지 1개(${BOARD.w}×${BOARD.h}mm). 인쇄 영역(${ZONE.x1-ZONE.x0}×${ZONE.h}mm)이 대지 정가운데에 오도록 문구를 놓았습니다. 문구는 글자 윤곽선(벡터)으로 들어 있습니다. 윤곽선을 만들 수 없는 경우에만 이미지(${DPI}dpi)로 넣습니다.`,
-      '위치: 앞 = 인쇄 영역 왼쪽 끝(펜촉 쪽) 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝(클립 쪽) 맞춤','흰색 글씨는 흰 대지에서 보이지 않아 검정으로 넣었습니다. 그라데이션 글씨는 색 띠 그림을 글자 윤곽선으로 오려 낸(클리핑) 형태입니다.','',
+      '위치: 앞 = 인쇄 영역 왼쪽 끝(펜촉 쪽) 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝(클립 쪽) 맞춤','화이트는 완전한 흰색이 아니라 옐로우 2%(C0 M0 Y2 K0)로 들어 있습니다. 흰 대지에서는 거의 보이지 않으니 선택하거나 윤곽선 보기로 확인해 주세요. 그라데이션 글씨는 색 띠 그림을 글자 윤곽선으로 오려 낸(클리핑) 형태입니다.','',
       '번호 | 볼펜 색 | 문구 | 글씨체 | 글씨 색 | 위치 | 글자 크기 | 스티커 색 | 수량 | 대지 이름 | 문구 형태',...rows,''].join('\r\n');
     const files=[{name:base+'.eps',data:buildPenEps(proof,arts)},{name:'주문내역.txt',data:new TextEncoder().encode('﻿'+sheet)}];
     deliver(zipStore(files,ZIP_PW),base+'.zip');status('저장이 끝났습니다. 내려받은 ZIP 파일을 주문하신 곳으로 보내 주세요.')}
