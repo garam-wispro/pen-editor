@@ -102,7 +102,7 @@ small{color:var(--mut);display:block}
 .seg.mini button{padding:2px 7px!important;font-size:10.5px;letter-spacing:0;font-weight:500}
 #stkTabs{display:flex;margin-bottom:3px}
 #stkTabs button{flex:1;padding:4px 0!important;font-size:11px}
-.stk{display:grid;grid-template-columns:repeat(10,1fr);gap:2px}
+.stk{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;align-content:start;min-height:75px}
 .stk button{aspect-ratio:1;padding:0;min-height:0;border:none;background:transparent;border-radius:5px;font:400 15px/1 "Noto Emoji",sans-serif;display:flex;align-items:center;justify-content:center}
 .stk button:hover{background:var(--hov)}
 #txt{font-family:"Noto Sans KR","Malgun Gothic","Noto Emoji",sans-serif}
@@ -382,12 +382,16 @@ const SIZE={min:2,max:4,def:3.5,legible:2};
 const ST={s:.92}; // 스티커 크기 = 글자 크기 × s
 // 스티커: 문구 안에 글자처럼 들어간다(무료 글꼴 Noto Emoji의 한 가지 색 그림). c = 분류의 기본 '원래 색', 개별 색은 '그림:색'으로 적는다
 const STICKER_SETS=[
-  {ko:'하트·별',c:'#f472b6',list:'❤:#ef4444 🧡:#fb923c 💛:#facc15 💚:#22c55e 💙:#3b82f6 💜:#a855f7 🖤:#222222 🤍:#ffffff 🤎:#8b5a2b 💕 💖 💗 💓 💞 💘 💝 ⭐:#fbbf24 🌟:#fbbf24 ✨:#fbbf24 💫:#fbbf24 ⚡:#facc15 🔥:#f97316 💥:#f97316 🎀 👑:#f5b400 💎:#38bdf8 🏆:#f5b400 🎉:#a855f7 🎈:#ef4444 🎁:#ef4444'},
-  {ko:'표정',c:'#f5b400',list:'😀 😄 😊 🙂 😉 😍 🥰 😘 😎 🤩 🥳 😇 🤗 😂 🤣 😆 😋 😜 🤔 😴 😭 🥺 😤 😱 👍:#e0a070 👏:#e0a070 🙏:#e0a070 ✌:#e0a070 🤞:#e0a070 💪:#e0a070'},
-  {ko:'동물',c:'#8b5a2b',list:'🐶 🐱 🐰:#f9a8d4 🐻 🐼:#222222 🐯:#f59e0b 🦊:#f97316 🐹 🐨:#8a8a8a 🐷:#f9a8d4 🐸:#22c55e 🐵 🐥:#facc15 🐧:#222222 🦄:#c084fc 🐝:#facc15 🦋:#60a5fa 🐢:#16a34a 🐬:#38bdf8 🐳:#38bdf8 🐙:#f472b6 🦖:#16a34a 🐾 🐟:#38bdf8 🐞:#ef4444 🦁:#f59e0b 🐮 🐔 🦉 🐿'},
-  {ko:'자연',c:'#22c55e',list:'🌸:#f9a8d4 🌷:#f472b6 🌹:#ef4444 🌻:#facc15 🌼:#facc15 🌺:#f472b6 🍀 🌿 🌱 🌳 🌵 🍁:#f97316 🍂:#b45309 🌈:#a855f7 ☀:#f59e0b 🌙:#facc15 ☁:#93c5fd ⛅:#93c5fd ❄:#60a5fa ☔:#3b82f6 🌊:#38bdf8 ⛄:#93c5fd 🌍:#3b82f6 🪐:#a78bfa 🌕:#facc15 💧:#38bdf8 🌴 🍃 🌾:#eab308 🍄:#ef4444'},
-  {ko:'음식',c:'#f97316',list:'🍎:#ef4444 🍓:#ef4444 🍒:#ef4444 🍑:#fb923c 🍋:#facc15 🍊 🍉:#22c55e 🍇:#a855f7 🍌:#facc15 🥑:#16a34a 🍔 🍕 🍟:#facc15 🌭 🍩:#f472b6 🍪:#b45309 🎂:#f472b6 🍰:#f472b6 🧁:#f472b6 🍭:#f472b6 🍬:#f472b6 🍫:#78350f ☕:#78350f 🍦:#f9a8d4 🧋:#b45309 🥤:#ef4444 🍜 🍙:#222222 🍞:#b45309 🥐:#b45309'},
-  {ko:'사물',c:'#3b82f6',list:'📚 📖 ✏:#f59e0b 📝 🎓:#222222 🏫 💯:#ef4444 ✅:#22c55e ❗:#ef4444 ❓:#ef4444 🎵:#a855f7 🎶:#a855f7 🎤 🎧 🎮 ⚽:#222222 🏀:#f97316 ⚾ 🎨:#f472b6 📷:#222222 💡:#facc15 🔔:#facc15 ⏰:#ef4444 🚀:#ef4444 ✈ 🚗:#ef4444 🏠:#f97316 💌:#f472b6 ☎:#ef4444 🔑:#f5b400'}]; // 글자 크기(mm): 고를 수 있는 범위, 기본값, 이보다 작아지면 경고
+  {ko:'하트·별',c:'#f472b6',list:'❤:#ef4444 🧡:#fb923c 💛:#facc15 💚:#22c55e 💙:#3b82f6 💜:#a855f7 🖤:#222222 💕 💖 💘 💝 ⭐:#fbbf24 🌟:#fbbf24 ✨:#fbbf24 ⚡:#facc15 🔥:#f97316 🎀 👑:#f5b400 💎:#38bdf8 🏆:#f5b400 🎉:#a855f7 🎈:#ef4444 🎁:#ef4444'},
+  {ko:'표정',c:'#f5b400',list:'😊 😄 😍 🥰 😉 😎 🥳 🤩 😂 😜 🤔 😭 🥺 👍:#e0a070 👏:#e0a070 🙏:#e0a070 ✌:#e0a070 💪:#e0a070'},
+  {ko:'동물',c:'#8b5a2b',list:'🐶 🐱 🐰:#f9a8d4 🐻 🐼:#222222 🐯:#f59e0b 🦊:#f97316 🐹 🐷:#f9a8d4 🐸:#22c55e 🐥:#facc15 🐧:#222222 🦄:#c084fc 🐝:#facc15 🦋:#60a5fa 🐢:#16a34a 🐬:#38bdf8 🐳:#38bdf8 🦖:#16a34a 🐾'},
+  {ko:'자연',c:'#22c55e',list:'🌸:#f9a8d4 🌷:#f472b6 🌹:#ef4444 🌻:#facc15 🌼:#facc15 🍀 🌿 🌱 🌳 🍁:#f97316 🌈:#a855f7 ☀:#f59e0b 🌙:#facc15 ☁:#93c5fd ❄:#60a5fa ☔:#3b82f6 🌊:#38bdf8 ⛄:#93c5fd 🌍:#3b82f6 💧:#38bdf8'},
+  {ko:'음식',c:'#f97316',list:'🍎:#ef4444 🍓:#ef4444 🍒:#ef4444 🍑:#fb923c 🍋:#facc15 🍊 🍉:#22c55e 🍇:#a855f7 🍔 🍕 🍩:#f472b6 🍪:#b45309 🎂:#f472b6 🍰:#f472b6 🧁:#f472b6 🍭:#f472b6 🍫:#78350f ☕:#78350f 🍦:#f9a8d4 🧋:#b45309'},
+  {ko:'사물',c:'#3b82f6',list:'📚 ✏:#f59e0b 📝 🎓:#222222 💯:#ef4444 ✅:#22c55e ❗:#ef4444 ❓:#ef4444 🎵:#a855f7 🎤 🎮 ⚽:#222222 🏀:#f97316 🎨:#f472b6 💡:#facc15 ⏰:#ef4444 🚀:#ef4444 ✈ 🏠:#f97316 💌:#f472b6'}];
+// 속이 꽉 찬 하트·별: 글꼴 그림 대신 직접 그린 도형을 쓴다(-1~1 상자 기준 SVG 경로)
+const HEART_D='M0 .95C-.25 .72-1 .25-1-.35C-1-.75-.7-.95-.45-.95C-.2-.95-.05-.8 0-.62C.05-.8 .2-.95 .45-.95C.7-.95 1-.75 1-.35C1 .25 .25 .72 0 .95Z';
+const STAR_D='M'+Array.from({length:10},(_,i)=>{const r=i%2?.47:1,a=-Math.PI/2+i*Math.PI/5;return(r*Math.cos(a)).toFixed(3)+' '+(r*Math.sin(a)+.05).toFixed(3)}).join('L')+'Z';
+const SOLID={'❤':HEART_D,'🧡':HEART_D,'💛':HEART_D,'💚':HEART_D,'💙':HEART_D,'💜':HEART_D,'🖤':HEART_D,'⭐':STAR_D};
 /* ======================================================================================= */
 
 const $=s=>document.querySelector(s);
@@ -421,11 +425,13 @@ const mcx=document.createElement('canvas').getContext('2d');
 let EMO_RE;try{EMO_RE=new RegExp('\\p{Extended_Pictographic}(?:\\uFE0F|\\u200D\\p{Extended_Pictographic}|[\\u{1F3FB}-\\u{1F3FF}])*','gu')}catch{EMO_RE=/[\u2190-\u2BFF\u{1F000}-\u{1FAFF}]\uFE0F?/gu}
 const STKC={}; // 그림 → 원래 색
 for(const set of STICKER_SETS){set.items=set.list.split(' ').map(t=>{const [ch,c]=t.split(':');STKC[ch]=c||set.c;return{ch,c:c||set.c}})}
+const STKV=Object.fromEntries(Object.entries(SOLID).map(([ch,d])=>[ch,{d,path:new Path2D(d)}])),VW=1.12; // 직접 그리는 스티커 · 그 스티커가 차지하는 폭(스티커 크기 × VW)
+const emoKey=t=>t.replace(/️/g,'');
 const emoCss=px=>`400 ${px*ST.s}px "Noto Emoji"`;
 function runsOf(text){const out=[];let i=0;for(const m of text.matchAll(EMO_RE)){if(m.index>i)out.push({t:text.slice(i,m.index)});out.push({t:m[0],e:1});i=m.index+m[0].length}
   if(i<text.length)out.push({t:text.slice(i)});return out} // 문구를 [글자 묶음, 스티커, 글자 묶음…]으로 나눈다
 const hasSticker=p=>runsOf(p.text).some(r=>r.e);
-function textW(p,size){let w=0;for(const r of runsOf(p.text)){mcx.font=r.e?emoCss(100):fontCss(fontOf(p),100);w+=mcx.measureText(r.t).width}return w/100*size} // 문구(스티커 포함)의 가로 폭(mm)
+function textW(p,size){let w=0;for(const r of runsOf(p.text)){if(r.e&&STKV[emoKey(r.t)]){w+=100*ST.s*VW;continue}mcx.font=r.e?emoCss(100):fontCss(fontOf(p),100);w+=mcx.measureText(r.t).width}return w/100*size} // 문구(스티커 포함)의 가로 폭(mm)
 function effSize(p){const w=textW(p,p.size);return w>ZONE.w?p.size*ZONE.w/w:p.size} // 인쇄 영역을 넘으면 영역 폭에 맞게 줄인 크기
 const hasText=p=>!!p.text.trim();
 const tname=p=>{const c=txtCol(p);return`${c.no}번 ${c.ko}`}; // 글씨 색 이름: '14번 옐로우'
@@ -447,8 +453,9 @@ function paintOf(c,col,x,cy,w,h){if(!col.grad)return col.hex;const d=(w+h)/2,g=c
 const cssOf=col=>col.grad?`linear-gradient(135deg,${col.grad.join(',')})`:col.hex;
 function drawText(c,k,ox,oy,p){if(!hasText(p))return;const s=effSize(p),px=s*k,bw=textW(p,s)*k,x0=ox+textCx(p)*k-bw/2;
   c.save();c.textAlign='left';c.textBaseline='middle';const paint=paintOf(c,txtCol(p),x0,oy,bw,px);let x=x0;
-  for(const r of runsOf(p.text)){const own=r.e&&p.scol!=='text'&&STKC[r.t.replace(/\uFE0F/g,'')];
-    c.font=r.e?emoCss(px):fontCss(fontOf(p),px);c.fillStyle=own||paint;c.fillText(r.t,x,oy+px*.04);x+=c.measureText(r.t).width}
+  for(const r of runsOf(p.text)){const key=emoKey(r.t),own=r.e&&p.scol!=='text'&&STKC[key],v=r.e&&STKV[key];c.fillStyle=own||paint;
+    if(v){const adv=px*ST.s*VW,q=px*ST.s*.46,P=new Path2D();P.addPath(v.path,new DOMMatrix([q,0,0,q,x+adv/2,oy]));c.fill(P);x+=adv;continue}
+    c.font=r.e?emoCss(px):fontCss(fontOf(p),px);c.fillText(r.t,x,oy+px*.04);x+=c.measureText(r.t).width}
   c.restore()}
 function drawPen(c,k,ox,oy,p,o={}){const B=penCol(p).hex,{L,R,tip,btn,clipX0,clipX1}=PEN,edge='rgba(0,0,0,.3)';
   c.save();c.translate(ox,oy);c.scale(k,k);c.lineWidth=1/k;c.lineJoin='round';
@@ -547,7 +554,7 @@ $('#txtSw').innerHTML=TEXT_COLORS.map(c=>`<button data-c="${c.id}" title="${c.no
 // 스티커: 분류 탭을 누르면 그 분류의 그림이 뜨고, 그림을 누르면 문구의 커서 자리에 들어간다
 let stkCat=0;
 function buildStk(){$('#stkTabs').innerHTML=STICKER_SETS.map((x,i)=>`<button data-i="${i}" class="${i===stkCat?'on':''}">${x.ko}</button>`).join('');
-  $('#stkGrid').innerHTML=STICKER_SETS[stkCat].items.map(x=>`<button data-ch="${x.ch}" style="color:${x.c==='#ffffff'?'#b9b9b9':x.c}" title="문구에 넣기">${x.ch}</button>`).join('')}
+  $('#stkGrid').innerHTML=STICKER_SETS[stkCat].items.map(x=>`<button data-ch="${x.ch}" style="color:${x.c==='#ffffff'?'#b9b9b9':x.c}" title="문구에 넣기">${STKV[x.ch]?`<svg viewBox="-1.15 -1.15 2.3 2.3" width="16" height="16"><path d="${STKV[x.ch].d}" fill="currentColor"/></svg>`:x.ch}</button>`).join('')}
 buildStk();
 $('#stkTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){stkCat=+b.dataset.i;buildStk()}});
 $('#stkGrid').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||busy)return;const t=$('#txt'),v=t.value,ch=b.dataset.ch;
