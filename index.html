@@ -7,7 +7,7 @@
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('pen_theme')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Nanum+Gothic:wght@700&family=Nanum+Pen+Script&family=Jua&family=Noto+Emoji&display=swap">
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Nanum+Gothic:wght@700&family=Nanum+Pen+Script&family=Jua&family=Noto+Emoji&display=swap">
 <style>
 /* 인쇄용 글씨체(웹폰트) */
 @font-face{font-family:'Cafe24 Dongdong';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Dongdong/Cafe24Dongdong.woff2') format('woff2');font-display:swap}
@@ -671,8 +671,60 @@ function proofCanvas(items,head){const k=6,W=1000,rh=122,top=70,c=document.creat
     x.fillText(`${it.no}  ${penCol(p).ko} ${it.q}개`,(W-PEN.L*k)/2,y+13);
     drawPen(x,k,(W-PEN.L*k)/2,y+30+(PH-PEN.R)*k,p)});
   return c}
-// 일러스트레이터에서 열리는 EPS: 그림(rasters)과 대지(boards)를 좌표대로 놓는다. 단위 pt, y는 위쪽이 +, 그림의 (x,y)와 대지의 (x1,y1)은 왼쪽 위 모서리
-function buildEps(Wt,Ht,rasters,boards,title){
+/* ---------- 윤곽선(벡터) 만들기: 글꼴 파일을 직접 읽어 글자 모양을 선으로 뽑는다 ---------- */
+const LIBS={ot:'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js',w2:'https://cdn.jsdelivr.net/npm/wawoff2@2.0.1/build/decompress_binding.js'};
+const loadScript=src=>new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>rej(new Error('불러오기 실패: '+src));document.head.appendChild(e)});
+let libP;function loadLibs(){return libP||(libP=(async()=>{await loadScript(LIBS.ot);
+  const ready=new Promise(r=>{window.Module={onRuntimeInitialized:r}});await loadScript(LIBS.w2);await ready})())} // opentype.js(글꼴 읽기) + wawoff2(woff2 풀기)
+function parseRange(v){if(!v)return null;return v.split(',').map(t=>{t=t.trim().replace(/^U\+/i,'');if(t.includes('?'))return[parseInt(t.replace(/\?/g,'0'),16),parseInt(t.replace(/\?/g,'F'),16)];const [a,b]=t.split('-');return[parseInt(a,16),parseInt(b||a,16)]})}
+// 이 화면이 쓰는 모든 @font-face(구글 폰트 포함)에서 글꼴 이름·굵기·파일 주소·담당 글자 범위를 모은다
+let FACES;function fontFaces(){const out=[];for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}
+  for(const r of rules){if(r.type!==5)continue;const st=r.style,m=/url\(["']?([^"')]+)["']?\)/.exec(st.getPropertyValue('src'));if(!m)continue;
+    const w=st.getPropertyValue('font-weight').replace('normal','400').replace('bold','700')||'400';
+    out.push({fam:st.getPropertyValue('font-family').replace(/["']/g,'').trim(),w,url:new URL(m[1],sh.href||location.href).href,range:parseRange(st.getPropertyValue('unicode-range'))})}}return out}
+const otCache={};
+function loadOt(url){return otCache[url]||(otCache[url]=(async()=>{let u8=new Uint8Array(await(await fetch(url)).arrayBuffer());
+  if(u8[0]===0x77&&u8[1]===0x4f&&u8[2]===0x46&&u8[3]===0x32){const d=Module.decompress(u8);if(!d)throw new Error('woff2');u8=d}
+  return opentype.parse(u8.buffer.slice(u8.byteOffset,u8.byteOffset+u8.byteLength))})())}
+async function fontFor(cp,fams,weight){FACES=FACES||fontFaces(); // 이 글자를 가진 글꼴 파일을 찾는다(없으면 다음 글꼴로)
+  for(const fam of fams){const fs=FACES.filter(f=>f.fam===fam&&(!f.range||f.range.some(([a,b])=>cp>=a&&cp<=b)));if(!fs.length)continue;
+    const dist=f=>{const [a,b=a]=String(f.w).split(' ').map(Number);return weight<a?a-weight:weight>b?weight-b:0};fs.sort((x,y)=>dist(x)-dist(y));
+    try{const font=await loadOt(fs[0].url);if(font.charToGlyphIndex(String.fromCodePoint(cp))>0)return font}catch{}}
+  return null}
+// 한 묶음의 글자를 윤곽선 명령으로: 왼쪽 끝 x=0, 글자 밑선 y=0, 단위는 size와 같다. 못 만드는 글자가 있으면 null
+async function outlineText(text,fams,weight,size){const cmds=[];let x=0,seg='',segFont=null;
+  const flush=()=>{if(!seg)return;cmds.push(...segFont.getPath(seg,x,0,size).commands);x+=segFont.getAdvanceWidth(seg,size);seg=''};
+  for(const ch of text){const cp=ch.codePointAt(0);if(cp===0xFE0F)continue;const font=await fontFor(cp,fams,weight);
+    if(!font){if(/\s/.test(ch)){flush();x+=size*.3;continue}return null}
+    if(font!==segFont){flush();segFont=font}seg+=ch}
+  flush();return{cmds,adv:x}}
+function parseD(d){const t=d.match(/[MLCZ]|-?\d*\.?\d+/g),out=[];let i=0,cmd;
+  while(i<t.length){if(/[MLCZ]/.test(t[i]))cmd=t[i++];if(cmd==='Z'){out.push({type:'Z'});continue}
+    const n=cmd==='C'?6:2,v=t.slice(i,i+n).map(Number);i+=n;out.push(cmd==='C'?{type:'C',x1:v[0],y1:v[1],x2:v[2],y2:v[3],x:v[4],y:v[5]}:{type:cmd,x:v[0],y:v[1]})}return out}
+const moveCmds=(cmds,a,dx,dy)=>cmds.map(c=>{const o={type:c.type};for(const k of['x','x1','x2'])if(c[k]!=null)o[k]=c[k]*a+dx;for(const k of['y','y1','y2'])if(c[k]!=null)o[k]=c[k]*a+dy;return o});
+// 볼펜 한 종의 문구를 윤곽선으로: 좌표는 대지 기준 mm(왼쪽 위가 0,0). 색이 같은 것끼리 한 덩어리(layer)로 묶는다
+async function vectorArt(p){const q=isWhite(p)?{...p,tcolor:'c1'}:p,s=effSize(q),f=fontOf(q),col=txtCol(q),parts=[];let W=0;
+  for(const r of runsOf(q.text)){const key=emoKey(r.t),own=r.e&&q.scol!=='text'&&STKC[key],v=r.e&&STKV[key];let part;
+    if(v){const adv=s*ST.s*VW;part={adv,cmds:moveCmds(parseD(v.d),s*ST.s*.46,adv/2,0)}}
+    else{const o=await outlineText(r.t,r.e?['Noto Emoji']:[f.fam,'Noto Sans KR'],r.e?400:f.w,r.e?s*ST.s:s);if(!o)return null;
+      mcx.font=r.e?emoCss(100):fontCss(f,100);const m=mcx.measureText(r.t); // 화면과 같은 높이에 놓기: 가운데 맞춤 기준에서 글자 밑선까지의 거리
+      part={adv:o.adv,cmds:moveCmds(o.cmds,1,0,(m.fontBoundingBoxAscent-m.fontBoundingBoxDescent)/200*s+s*.04)}}
+    part.fill=own||'';parts.push(part);W+=part.adv}
+  const zl=(BOARD.w-(ZONE.x1-ZONE.x0))/2,zr=zl+ZONE.x1-ZONE.x0,al=posOf(q).al,x0=al==='left'?zl+ZONE.pad:al==='right'?zr-ZONE.pad-W:(zl+zr)/2-W/2,layers=new Map();let x=x0;
+  for(const pt of parts){if(!layers.has(pt.fill))layers.set(pt.fill,[]);layers.get(pt.fill).push(...moveCmds(pt.cmds,1,x,BOARD.h/2));x+=pt.adv}
+  return{vec:[...layers].map(([k,cmds])=>({col:k?{hex:k}:col,cmds})),x0,W,s}}
+// 그라데이션 글씨용 바탕 그림: 윤곽선 모양대로 오려 낼(클리핑) 색 띠
+function gradImg(col,W,s){const k=600/25.4,wmm=W+2,hmm=s*1.8,c=document.createElement('canvas');c.width=Math.round(wmm*k);c.height=Math.round(hmm*k);
+  const x=c.getContext('2d');x.fillStyle=paintOf(x,col,k,c.height/2,W*k,s*k);x.fillRect(0,0,c.width,c.height);return{im:toRgb(c),wmm,hmm}}
+// 윤곽선 명령 → 닫힌 선 하나하나(sub)로 나누고, 2차 곡선은 3차 곡선으로 바꾼다. X,Y = 좌표 변환 함수
+function subsOf(cmds,X,Y){const subs=[];let cur=null,px=0,py=0;
+  for(const c of cmds){if(c.type==='M'){cur=[{t:'M',x:X(c.x),y:Y(c.y)}];subs.push(cur);px=c.x;py=c.y}
+    else if(c.type==='L'){cur.push({t:'L',x:X(c.x),y:Y(c.y)});px=c.x;py=c.y}
+    else if(c.type==='C'){cur.push({t:'C',x1:X(c.x1),y1:Y(c.y1),x2:X(c.x2),y2:Y(c.y2),x:X(c.x),y:Y(c.y)});px=c.x;py=c.y}
+    else if(c.type==='Q'){cur.push({t:'C',x1:X(px+2/3*(c.x1-px)),y1:Y(py+2/3*(c.y1-py)),x2:X(c.x+2/3*(c.x1-c.x)),y2:Y(c.y+2/3*(c.y1-c.y)),x:X(c.x),y:Y(c.y)});px=c.x;py=c.y}}
+  return subs.filter(u=>u.length>1)}
+// 일러스트레이터에서 열리는 EPS: 그림·윤곽선(items)과 대지(boards)를 좌표대로 놓는다. 단위 pt, y는 위쪽이 +, 그림의 (x,y)와 대지의 (x1,y1)은 왼쪽 위 모서리
+function buildEps(Wt,Ht,items,boards,title){
   const cx=Wt/2,cy=Ht/2,OX=8191.5-cx,OY=8191.5+cy;
   const f=v=>String(Math.round(v*1e4)/1e4),g=v=>String(Math.round(v*1e8)/1e8);
   const uuid=()=>'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));
@@ -698,16 +750,25 @@ function buildEps(Wt,Ht,rasters,boards,title){
   L('%_; (ArtboardArray) ,');L('%_1 /Int (CropAreaActive) ,');L('%_; /Recorded ,');L('%_/Dictionary : /NotRecorded ,');L(`%_${boards.length} /Int (LastArtboardID) ,`);
   L('%_0 /Bool (AISaveMultipleArtboards) ,');L('%_; /NotRecorded ,');L('%_;');L('%AI9_EndDocumentData');L('%%EndSetup');
   L('%AI5_BeginLayer');L('1 1 1 1 0 0 1 0 79 128 255 0 50 0 Lb');L('(Layer 1) Ln');L('0 A');
-  rasters.forEach(raster);
+  // 윤곽선: 색이 같은 선들을 컴파운드 패스 하나로. 색은 CMYK와 RGB를 함께 적는다
+  const col7=hex=>{const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,gr=(n>>8&255)/255,b=(n&255)/255,k=1-Math.max(r,gr,b),d=1-k||1;return[(1-r-k)/d,(1-gr-k)/d,(1-b-k)/d,k,r,gr,b].map(g).join(' ')};
+  const pathOps=(subs,end)=>{for(const sp of subs){for(const c of sp)L(c.t==='M'?`${f(c.x)} ${f(c.y)} m`:c.t==='L'?`${f(c.x)} ${f(c.y)} L`:`${f(c.x1)} ${f(c.y1)} ${f(c.x2)} ${f(c.y2)} ${f(c.x)} ${f(c.y)} C`);end.forEach(L)}};
+  const vector=it=>{L('0 A');L('*u');L('0 O');L(col7(it.hex)+' Xa');L('0 XR');pathOps(it.subs,['f']);L('*U')};
+  const clip=it=>{L('q');L('0 A');L('*u');L('0 XR');pathOps(it.subs,['h','W','n']);L('*U');raster(it.ras);L('Q')}; // 그라데이션: 색 띠 그림을 글자 모양으로 오려 낸다
+  items.forEach(it=>it.subs?(it.ras?clip(it):vector(it)):raster(it));
   L('LB');L('%AI5_EndLayer--');L('%%PageTrailer');L('gsave annotatepage grestore showpage');L('%%Trailer');L('%%EOF');flush();
   let n=0;for(const q of parts)n+=q.length;const out=new Uint8Array(n);let o=0;for(const q of parts){out.set(q,o);o+=q.length}return out}
 // 한 장 배치: 맨 위에 예시 이미지, 그 아래로 볼펜마다 [설명 한 줄 + 145×10mm 대지]. 문구는 인쇄 영역이 대지 정가운데에 오는 자리에 놓인다
 function buildPenEps(proof,arts){const MM=72/25.4,AW=BOARD.w*MM,AH=BOARD.h*MM,PW=AW+60,pad=24,Wt=PW+pad*2,ph=PW*proof.h/proof.w,LH=9,G1=30,G2=5,G3=14;
-  const Ht=pad+ph+G1+arts.length*(LH+G2+AH+G3)+pad-G3,bx=(Wt-AW)/2,rasters=[{im:proof,x:pad,y:Ht-pad,w:PW,h:ph}],boards=[];let y=Ht-pad-ph-G1;
-  for(const a of arts){rasters.push({im:a.label,x:bx,y,w:a.label.w*LH/a.label.h,h:LH});y-=LH+G2;
+  const Ht=pad+ph+G1+arts.length*(LH+G2+AH+G3)+pad-G3,bx=(Wt-AW)/2,items=[{im:proof,x:pad,y:Ht-pad,w:PW,h:ph}],boards=[];let y=Ht-pad-ph-G1;
+  for(const a of arts){items.push({im:a.label,x:bx,y,w:a.label.w*LH/a.label.h,h:LH});y-=LH+G2;const top=y,X=v=>bx+v*MM,Y=v=>top-v*MM;
     boards.push({x1:bx,y1:y,x2:bx+AW,y2:y-AH,name:a.name});
-    rasters.push({im:a.im,x:bx+(a.cx-a.wmm/2)*MM,y:y-(BOARD.h-a.hmm)/2*MM,w:a.wmm*MM,h:a.hmm*MM});y-=AH+G3}
-  return buildEps(Wt,Ht,rasters,boards,'pen')}
+    if(a.vec)for(const ly of a.vec){const subs=subsOf(ly.cmds,X,Y);if(!subs.length)continue;
+      if(ly.col.grad){const gi=gradImg(ly.col,a.W,a.s);items.push({subs,ras:{im:gi.im,x:X(a.x0-1),y:Y(BOARD.h/2-gi.hmm/2),w:gi.wmm*MM,h:gi.hmm*MM}})}
+      else items.push({subs,hex:ly.col.hex})}
+    else items.push({im:a.im,x:bx+(a.cx-a.wmm/2)*MM,y:y-(BOARD.h-a.hmm)/2*MM,w:a.wmm*MM,h:a.hmm*MM});
+    y-=AH+G3}
+  return buildEps(Wt,Ht,items,boards,'pen')}
 function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000)}
 // PC는 바로 저장. 휴대폰은 만든 뒤 버튼을 직접 눌러 저장·공유하게 한다(자동 저장이 막히는 기기 대비).
 function deliver(blob,name){if(!COARSE)return download(blob,name);
@@ -731,18 +792,21 @@ async function exportAll(){
     try{await Promise.all(items.flatMap(it=>[document.fonts.load(fontCss(fontOf(it.p),40),it.p.text),...(hasSticker(it.p)?[document.fonts.load(emoCss(40),it.p.text)]:[])]))}catch{}
     // 스티커 글꼴이 없으면 기기마다 다른 그림이 인쇄 파일에 들어가므로 막는다
     if(items.some(it=>hasSticker(it.p)&&!document.fonts.check(emoCss(40),it.p.text)))throw new Error('스티커 글꼴을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+    status('윤곽선 도구 준비 중…');let canVec=true;try{await loadLibs()}catch{canVec=false}
     status('예시 이미지 만드는 중…');await tick();
     const proof=toRgb(proofCanvas(items,`주문자 ${name}  ·  주문번호 ${ono}  ·  ${sum}`));
     for(let i=0;i<items.length;i++){const {p,no,q}=items[i],bn=`${no}_${penCol(p).ko}_${q}개`,tc=tname(p)+(isWhite(p)?'(대지에는 검정으로 표시)':'');
       status(`대지 만드는 중… ${i+1} / ${items.length}`);await tick();
-      arts.push({...artOf(p),name:bn,label:textImg(`${no}  ${penCol(p).ko} ${q}개  ·  글씨 ${tc}  ·  ${fontOf(p).ko}  ·  ${posOf(p).ko}`,40)});
-      rows.push(`${no}번 | ${penCol(p).ko} | ${p.text} | ${fontOf(p).ko} | ${tc} | ${posOf(p).ko} | ${effSize(p).toFixed(1)}mm | ${hasSticker(p)?(p.scol==='text'?'글씨 색':'원래 색'):'-'} | ${q}개 | ${bn}`)}
+      let art=null;if(canVec)try{art=await vectorArt(p)}catch{}
+      const how=art?'윤곽선':'이미지';if(!art)art=artOf(p); // 윤곽선을 못 만들면(글꼴에 없는 글자 등) 이미지로 넣는다
+      arts.push({...art,name:bn,label:textImg(`${no}  ${penCol(p).ko} ${q}개  ·  글씨 ${tc}  ·  ${fontOf(p).ko}  ·  ${posOf(p).ko}${art.vec?'':'  ·  이미지'}`,40)});
+      rows.push(`${no}번 | ${penCol(p).ko} | ${p.text} | ${fontOf(p).ko} | ${tc} | ${posOf(p).ko} | ${effSize(p).toFixed(1)}mm | ${hasSticker(p)?(p.scol==='text'?'글씨 색':'원래 색'):'-'} | ${q}개 | ${bn} | ${how}`)}
     status('파일로 묶는 중…');await tick();
     const sheet=['[볼펜 주문 내역]',`주문자명: ${name}`,`주문번호: ${ono}`,`작성일시: ${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())} ${p2(n.getHours())}:${p2(n.getMinutes())}`,
       '인쇄: 옆면 한쪽, 문구 1줄',`합계: ${sum}`,
-      `EPS: 맨 위에 예시 이미지, 아래에 볼펜마다 대지 1개(${BOARD.w}×${BOARD.h}mm). 인쇄 영역(${ZONE.x1-ZONE.x0}×${ZONE.h}mm)이 대지 정가운데에 오도록 문구를 놓았습니다. 문구 이미지 ${DPI}dpi.`,
-      '위치: 앞 = 인쇄 영역 왼쪽 끝(펜촉 쪽) 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝(클립 쪽) 맞춤','흰색 글씨는 흰 대지에서 보이지 않아 검정으로 넣었습니다.','',
-      '번호 | 볼펜 색 | 문구 | 글씨체 | 글씨 색 | 위치 | 글자 크기 | 스티커 색 | 수량 | 대지 이름',...rows,''].join('\r\n');
+      `EPS: 맨 위에 예시 이미지, 아래에 볼펜마다 대지 1개(${BOARD.w}×${BOARD.h}mm). 인쇄 영역(${ZONE.x1-ZONE.x0}×${ZONE.h}mm)이 대지 정가운데에 오도록 문구를 놓았습니다. 문구는 글자 윤곽선(벡터)으로 들어 있습니다. 윤곽선을 만들 수 없는 경우에만 이미지(${DPI}dpi)로 넣습니다.`,
+      '위치: 앞 = 인쇄 영역 왼쪽 끝(펜촉 쪽) 맞춤, 중간 = 가운데 맞춤, 뒤 = 오른쪽 끝(클립 쪽) 맞춤','흰색 글씨는 흰 대지에서 보이지 않아 검정으로 넣었습니다. 그라데이션 글씨는 색 띠 그림을 글자 윤곽선으로 오려 낸(클리핑) 형태입니다.','',
+      '번호 | 볼펜 색 | 문구 | 글씨체 | 글씨 색 | 위치 | 글자 크기 | 스티커 색 | 수량 | 대지 이름 | 문구 형태',...rows,''].join('\r\n');
     const files=[{name:base+'.eps',data:buildPenEps(proof,arts)},{name:'주문내역.txt',data:new TextEncoder().encode('﻿'+sheet)}];
     deliver(zipStore(files,ZIP_PW),base+'.zip');status('저장이 끝났습니다. 내려받은 ZIP 파일을 주문하신 곳으로 보내 주세요.')}
   catch(err){status('');alert('내보내기 실패: '+err.message)}
