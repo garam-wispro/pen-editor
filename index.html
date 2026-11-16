@@ -7,18 +7,24 @@
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('pen_theme')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Jua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Nanum+Gothic:wght@700&family=Nanum+Pen+Script&family=Jua&display=swap">
 <style>
 /* 인쇄용 글씨체(웹폰트) */
-@font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Pretendard/Pretendard-SemiBold.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'Gmarket Sans';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/GmarketSans/GmarketSansMedium.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-6SemiBold.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'NanumSquare Neo';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareNeo/NanumSquareNeoB.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'Jalnan';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Jalnan/Jalnan.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Cafe24 Dongdong';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Dongdong/Cafe24Dongdong.woff2') format('woff2');font-display:swap}
 @font-face{font-family:'Cafe24 Ssurround';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/Cafe24Ssurround.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'MaruBuri';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri-SemiBold.woff2') format('woff2');font-display:swap}
-@font-face{font-family:'KCC Dodamdodam';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/KCCDodamdodam/KCCDodamdodam.woff2') format('woff2');font-display:swap}
 @font-face{font-family:'Hakgyoansim Bombanghak';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBombanghakR.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Ttangs Budaejjigae';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/TtangsBudaeJjigae/TtangsBudaeJjigae-Medium.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Cafe24 Decoshadow';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Decoshadow/Cafe24Decoshadow.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Chosun Sm';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/ChosunSm/ChosunSm.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Pretendard/Pretendard-SemiBold.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Paperlogy';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-6SemiBold.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Gmarket Sans';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/GmarketSans/GmarketSansMedium.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'NanumSquare Neo';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareNeo/NanumSquareNeoB.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Moneygraphy Rounded';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2411-2@1.0/Moneygraphy-Rounded.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Jalnan';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Jalnan/Jalnan.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'MaruBuri';src:url('https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri-SemiBold.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Kyobo Handwriting 2025';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2604-1@1.1/KyoboHandwriting2025lyb.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Ownglyph ParkDaHyun';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2') format('woff2');font-display:swap}
 /* 블랙 모드(기본 변수) */
 :root{color-scheme:dark;--bg:#15161a;--panel:#1e2026;--line:#30333c;--fg:#e8e9ee;--mut:#9a9eab;--acc:#ff4d8d;--acc2:#3ec5ff;--in:#282b33;--card:#2b2e38;--chip:rgba(255,77,141,.24);
   --stage1:#2a2c35;--stage2:#15161a;--hovb:#555a68;--hov:#30343e;--selbg:#3a2530;
@@ -35,7 +41,7 @@ header h1{font-size:15px;margin:0 12px 0 0;letter-spacing:-.02em}
 header h1 b{color:var(--acc)}
 .sp{flex:1}
 main{flex:1;display:flex;min-height:0}
-aside{width:270px;flex:none;background:var(--panel);overflow-y:auto;padding:16px 14px 28px}
+aside{width:292px;flex:none;background:var(--panel);overflow-y:auto;padding:14px 14px 14px}
 #left{border-right:1px solid var(--line)}
 #right{border-left:1px solid var(--line);width:300px}
 #center{flex:1;display:flex;flex-direction:column;min-width:0}
@@ -56,8 +62,9 @@ aside{width:270px;flex:none;background:var(--panel);overflow-y:auto;padding:16px
 .thumb canvas{display:block}
 .thumb span{font-size:11px;color:var(--mut)}
 h2{font-size:11px;letter-spacing:.08em;color:var(--mut);margin:0 0 9px;font-weight:700}
+h2 .n{display:inline-block;width:17px;height:17px;line-height:17px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;letter-spacing:0;font-size:10.5px;margin-right:7px}
 h2 em{font-style:normal;letter-spacing:0;color:var(--fg);font-size:12px;margin-left:7px}
-aside h2:not(:first-child){margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+aside h2:not(:first-child){margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
 button,select,input{font:inherit;color:inherit}
 button{background:var(--in);border:1px solid var(--line);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;touch-action:manipulation}
 button:hover{border-color:var(--hovb);background:var(--hov)}
@@ -79,7 +86,7 @@ aside .seg button,aside button.full{padding:9px 10px}
 .dpi{font-size:12px;line-height:1.55;padding:7px 9px;border-radius:6px;background:var(--okbg);color:var(--okfg);margin:8px 0 0}
 .dpi.warn{background:var(--warnbg);color:var(--warnfg)}
 .dpi.bad{background:var(--badbg);color:var(--badfg)}
-.spec{font-size:12px;line-height:1.85;color:var(--mut);background:var(--in);border:1px solid var(--line);border-radius:7px;padding:11px 13px;margin-bottom:12px}
+.spec{font-size:11.5px;line-height:1.75;color:var(--mut);background:var(--in);border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin:16px 0 0}
 .spec b{color:var(--fg);font-weight:700}
 small{color:var(--mut);display:block}
 /* 색상 고르기 */
@@ -90,24 +97,25 @@ small{color:var(--mut);display:block}
 .sw.sq{gap:5px;margin-bottom:0}
 .sw.sq button{border-radius:5px;box-shadow:none}
 /* 글씨체 고르기 */
-.fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.fonts button{padding:7px 4px;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
+.fonts{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.fgrp{font-size:11px;color:var(--mut);margin:10px 0 6px}
+.fgrp:first-child{margin-top:0}
+.fonts button{padding:7px 2px;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
 #txt{font-size:15px;padding:9px 10px}
-#txtCnt{text-align:right;margin-top:4px;font-size:11px}
 #posSeg{display:flex}
 #posSeg button{flex:1}
 #posNote{margin-top:6px;font-size:11px}
-#applyAll{margin:16px 0 0}
+#applyAll{margin:0}
 .qty{display:flex;align-items:center;gap:5px;margin-bottom:6px}
 .qty button{padding:4px 10px}
 .qty input[type=number]{width:66px;text-align:center}
-#addPen,#pvBtn{padding:14px 10px!important;font-size:14px;border-radius:12px}
-#addPen{display:flex;align-items:center;justify-content:center;gap:10px}
+#addPen,#pvBtn{padding:12px 10px!important;font-size:14px;border-radius:12px}
+#addPen{margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:10px}
 #addPen svg{flex:none;width:22px;height:22px}
 #pvBtn{margin-bottom:0}
-#saveBox{margin-top:30px;border-radius:14px;padding:16px 14px 14px;background:var(--card)}
+#saveBox{margin-top:0;border-radius:14px;padding:12px 12px 12px;background:var(--card)}
 #saveBox .saveT{font-size:15px;font-weight:700;margin-bottom:10px}
-#sum{display:inline-block;font-size:11.5px;line-height:1.5;color:var(--fg);background:var(--chip);border-radius:12px;padding:4px 11px;margin-bottom:14px;white-space:normal}
+#sum{display:inline-block;font-size:11.5px;line-height:1.5;color:var(--fg);background:var(--chip);border-radius:12px;padding:4px 11px;margin-bottom:10px;white-space:normal}
 #saveBtn{display:flex;align-items:center;gap:12px;text-align:left;margin:0!important;padding:15px 14px!important;border-radius:12px}
 #saveBtn svg{flex:none;width:30px;height:30px}
 #saveBtn .tx{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -157,8 +165,8 @@ small{color:var(--mut);display:block}
   header button{padding:7px 9px}
   main{display:flex;flex-direction:column}
   #center{display:block;order:1;flex:none}
-  #right{order:2}
-  #left{order:3}
+  #left{order:2}
+  #right{order:3}
   #stage{height:46vh;min-height:280px}
   aside,#right{width:auto;border:none;border-top:1px solid var(--line);overflow:visible}
   #strip{display:block;height:auto}
@@ -187,17 +195,22 @@ small{color:var(--mut);display:block}
 </header>
 <main>
 <aside id="left">
-  <h2>볼펜 색상<em id="penName"></em></h2>
+  <h2><b class="n">1</b>볼펜 색상<em id="penName"></em></h2>
   <div class="sw" id="penSw"></div>
-  <div class="spec" id="spec"></div>
-  <button id="addPen" class="pri full"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>다른 색 볼펜 추가하기</button>
-  <button class="pri full" id="pvBtn">🔍 전체 미리보기</button>
 
-  <div id="saveBox">
-    <div class="saveT">저장 · 시안 확정</div>
-    <div id="sum"></div>
-    <button class="pri full" id="saveBtn"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M4.5 17.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-1.5"/></svg><span class="tx"><b>저장하기</b><i>파일 저장하고 시안 확정하기</i></span></button>
-  </div>
+  <h2><b class="n">2</b>인쇄 문구<em id="txtCnt"></em></h2>
+  <input type="text" id="txt" maxlength="30" placeholder="예: 이호진고등수학" autocomplete="off">
+  <div class="dpi" id="fitInfo"></div>
+
+  <h2><b class="n">3</b>인쇄 위치</h2>
+  <div class="seg" id="posSeg"></div>
+  <small id="posNote">점선(가로 100 × 세로 4mm) 안에서 앞 = 펜촉 쪽 · 뒤 = 클립 쪽</small>
+
+  <h2><b class="n">4</b>글자 크기<em id="sizeV"></em></h2>
+  <input type="range" id="size" min="2" max="4" step="0.1">
+
+  <h2><b class="n">5</b>글씨 색<em id="txtName"></em></h2>
+  <div class="sw sq" id="txtSw"></div>
 </aside>
 
 <section id="center">
@@ -216,25 +229,23 @@ small{color:var(--mut);display:block}
 </section>
 
 <aside id="right">
-  <h2>인쇄 문구</h2>
-  <input type="text" id="txt" maxlength="30" placeholder="예: 이호진고등수학" autocomplete="off">
-  <small id="txtCnt"></small>
-  <div class="dpi" id="fitInfo"></div>
+  <h2><b class="n">6</b>글씨체<em id="fontName"></em></h2>
+  <div id="fontSeg">
+    <div class="fgrp">기존 글씨체</div>
+    <div class="fonts" id="fontOld"></div>
+    <div class="fgrp">새 글씨체</div>
+    <div class="fonts" id="fontNew"></div>
+  </div>
 
-  <h2>인쇄 위치</h2>
-  <div class="seg" id="posSeg"></div>
-  <small id="posNote">점선 안에서 앞 = 펜촉 쪽 · 중간 = 가운데 · 뒤 = 클립 쪽 끝</small>
-
-  <h2>글자 크기<em id="sizeV"></em></h2>
-  <input type="range" id="size" min="2" max="4" step="0.1">
-
-  <h2>글씨체<em id="fontName"></em></h2>
-  <div class="fonts" id="fontSeg"></div>
-
-  <h2>글씨 색<em id="txtName"></em></h2>
-  <div class="sw sq" id="txtSw"></div>
-
+  <h2><b class="n">7</b>다른 색 볼펜</h2>
+  <button id="addPen" class="pri full"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>다른 색 볼펜 추가하기</button>
   <button class="full" id="applyAll">이 문구·글씨체·위치를 모든 볼펜에 적용</button>
+
+  <h2><b class="n">8</b>저장 · 시안 확정</h2>
+  <div id="saveBox">
+    <div id="sum"></div>
+    <button class="pri full" id="saveBtn"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M4.5 17.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-1.5"/></svg><span class="tx"><b>저장하기</b><i>미리보기 확인 후 시안 확정하기</i></span></button>
+  </div>
 </aside>
 </main>
 
@@ -310,19 +321,27 @@ const TEXT_COLORS=[
   {id:'c25',no:25,ko:'딥그린',hex:'#14532d'},{id:'c26',no:26,ko:'그린',hex:'#1f9d55'},{id:'c27',no:27,ko:'라이트그린',hex:'#5fcf5f'},{id:'c28',no:28,ko:'라임',hex:'#a6e22e'},{id:'c29',no:29,ko:'올리브',hex:'#7a8b2a'},{id:'c30',no:30,ko:'카키',hex:'#5b6b3a'},{id:'c31',no:31,ko:'민트',hex:'#7fe0c0'},{id:'c32',no:32,ko:'파스텔그린',hex:'#b9f2c7'},
   {id:'c33',no:33,ko:'네이비',hex:'#14285a'},{id:'c34',no:34,ko:'로열블루',hex:'#1f4fd8'},{id:'c35',no:35,ko:'블루',hex:'#0c88d4'},{id:'c36',no:36,ko:'스카이블루',hex:'#3ebaf4'},{id:'c37',no:37,ko:'청록',hex:'#0f8b8d'},{id:'c38',no:38,ko:'터콰이즈',hex:'#23c4c4'},{id:'c39',no:39,ko:'베이비블루',hex:'#a9d8ff'},{id:'c40',no:40,ko:'아이스블루',hex:'#d3efff'},
   {id:'c41',no:41,ko:'딥퍼플',hex:'#4a1d7a'},{id:'c42',no:42,ko:'퍼플',hex:'#7b3fc4'},{id:'c43',no:43,ko:'바이올렛',hex:'#9b6bff'},{id:'c44',no:44,ko:'라벤더',hex:'#c5b3ff'},{id:'c45',no:45,ko:'마젠타',hex:'#c2189a'},{id:'c46',no:46,ko:'플럼',hex:'#8e3a6e'},{id:'c47',no:47,ko:'라일락',hex:'#e3c4f0'},{id:'c48',no:48,ko:'인디고',hex:'#4b56c0'}];
-// 글씨체 10종: 무료(상업적 이용 가능)이면서 요즘 많이 쓰는 것. fam = 웹폰트 이름, w = 굵기, label = 버튼에 보이는 글자
+// 글씨체: 기존 8종(g:'old')을 먼저, 새로 고른 10종(g:'new')을 아래에. fam = 웹폰트 이름, w = 굵기, label = 버튼에 보이는 글자
 // 추가하려면 맨 위 @font-face(또는 구글 폰트 주소)에도 넣어야 한다
 const FONTS=[
-  {id:'pretendard',ko:'프리텐다드',fam:'Pretendard',w:600},
-  {id:'gmarket',ko:'지마켓 산스',fam:'Gmarket Sans',w:500},
-  {id:'paperlogy',ko:'페이퍼로지',fam:'Paperlogy',w:600},
-  {id:'nsneo',ko:'나눔스퀘어 네오',fam:'NanumSquare Neo',w:700,label:'나눔스퀘어네오'},
-  {id:'jalnan',ko:'여기어때 잘난체',fam:'Jalnan',w:400,label:'잘난체'},
-  {id:'ssurround',ko:'카페24 써라운드',fam:'Cafe24 Ssurround',w:400,label:'써라운드'},
-  {id:'jua',ko:'배민 주아',fam:'Jua',w:400},
-  {id:'maruburi',ko:'마루 부리',fam:'MaruBuri',w:600},
-  {id:'bom',ko:'학교안심 봄방학',fam:'Hakgyoansim Bombanghak',w:400,label:'봄방학'},
-  {id:'dodam',ko:'KCC 도담도담',fam:'KCC Dodamdodam',w:400,label:'도담도담'}];
+  {g:'old',id:'gothic',ko:'나눔고딕',fam:'Nanum Gothic',w:700},
+  {g:'old',id:'pen',ko:'나눔손글씨',fam:'Nanum Pen Script',w:400,label:'나눔손글씨'},
+  {g:'old',id:'dongdong',ko:'Cafe24 동동체',fam:'Cafe24 Dongdong',w:400,label:'동동체'},
+  {g:'old',id:'ssurround',ko:'Cafe24 써라운드체',fam:'Cafe24 Ssurround',w:400,label:'써라운드체'},
+  {g:'old',id:'bom',ko:'학교안심 봄방학',fam:'Hakgyoansim Bombanghak',w:400,label:'봄방학'},
+  {g:'old',id:'ttangs',ko:'땅스부대찌개',fam:'Ttangs Budaejjigae',w:400,label:'부대찌개'},
+  {g:'old',id:'deco',ko:'Cafe24 데코쉐도우(영문)',fam:'Cafe24 Decoshadow',w:400,label:'DECO'},
+  {g:'old',id:'chosun',ko:'조선신명조',fam:'Chosun Sm',w:400},
+  {g:'new',id:'pretendard',ko:'프리텐다드',fam:'Pretendard',w:600},
+  {g:'new',id:'paperlogy',ko:'페이퍼로지',fam:'Paperlogy',w:600},
+  {g:'new',id:'gmarket',ko:'지마켓 산스',fam:'Gmarket Sans',w:500,label:'지마켓산스'},
+  {g:'new',id:'nsneo',ko:'나눔스퀘어 네오',fam:'NanumSquare Neo',w:700,label:'스퀘어네오'},
+  {g:'new',id:'moneygraphy',ko:'토스 머니그라피',fam:'Moneygraphy Rounded',w:400,label:'머니그라피'},
+  {g:'new',id:'jalnan',ko:'여기어때 잘난체',fam:'Jalnan',w:400,label:'잘난체'},
+  {g:'new',id:'jua',ko:'배민 주아',fam:'Jua',w:400,label:'주아체'},
+  {g:'new',id:'maruburi',ko:'마루 부리',fam:'MaruBuri',w:600,label:'마루부리'},
+  {g:'new',id:'kyobo',ko:'교보 손글씨 2025 이유빈',fam:'Kyobo Handwriting 2025',w:400,label:'교보손글씨'},
+  {g:'new',id:'parkdahyun',ko:'온글잎 박다현체',fam:'Ownglyph ParkDaHyun',w:400,label:'박다현체'}];
 // 볼펜 모양(mm, 펜촉이 왼쪽). 상세페이지 인쇄영역 도면의 비율 그대로이며, 전체 길이 L만 가정값(143mm)이다
 const PEN={L:143,R:4.95,tip:11.8,btn:134.4,btnR:2.9,clipX0:102.2,clipX1:130.5};
 // 인쇄 영역(화면의 점선): 가로 100 × 세로 4mm. 펜촉 끝에서 x0~x1, 세로 h. pad = 앞·뒤 맞춤일 때 영역 끝에서 띄우는 여백
@@ -340,7 +359,7 @@ const COARSE=matchMedia('(pointer:coarse)').matches;
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){ // 구형 휴대폰 브라우저용
   r=Math.max(0,Math.min(+r||0,w/2,h/2));this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath()};
 let uidN=0;const uid=()=>'p'+Date.now().toString(36)+(uidN++).toString(36);
-const newPen=()=>({id:uid(),color:'mint',text:'',font:'pretendard',tcolor:'c1',pos:'back',size:SIZE.def,qty:1});
+const newPen=()=>({id:uid(),color:'mint',text:'',font:'gothic',tcolor:'c1',pos:'back',size:SIZE.def,qty:1});
 const qtyOf=p=>Math.min(99999,Math.max(1,Math.floor(+p.qty)||1));
 let state={pens:[newPen()]};
 let ci=0,showGuides=true,hist=[],hi=-1,stripSig='',busy=false;
@@ -406,7 +425,7 @@ function drawZoom(c,p,x,y,w,h,zk,o={}){const ox=x+w/2-textCx(p)*zk,oy=y+h/2;
   c.save();c.beginPath();c.roundRect(x,y,w,h,14);c.fillStyle=isLight()?'rgba(255,255,255,.6)':'rgba(255,255,255,.07)';c.fill();c.clip();
   drawPen(c,zk,ox,oy,p);
   if(o.ghost&&!hasText(p)){c.fillStyle=lum(penCol(p).hex)>.5?'rgba(0,0,0,.42)':'rgba(255,255,255,.6)';c.font='500 '+Math.max(11,Math.min(15,zk*1.4))+'px "Noto Sans KR","Malgun Gothic",sans-serif';
-    c.textAlign='center';c.textBaseline='middle';c.fillText('오른쪽에서 문구를 입력해 주세요',x+w/2,oy)}
+    c.textAlign='center';c.textBaseline='middle';c.fillText('왼쪽에서 문구를 입력해 주세요',x+w/2,oy)}
   if(o.guides){zoneRect(c,zk,ox,oy);c.fillStyle='#ff2d78';c.font='11px "Noto Sans KR","Malgun Gothic",sans-serif';c.textAlign='right';c.textBaseline='alphabetic';
     c.fillText(`┅ 인쇄 가능 영역 ${ZONE.x1-ZONE.x0}×${ZONE.h}mm`,x+w-10,y+h-8)}
   c.restore();
@@ -466,15 +485,15 @@ function syncUI(){const p=pen(),on=(sel,key,val)=>document.querySelectorAll(sel+
   const tt=totals();$('#total').textContent=tt.kinds?sumText(tt):'';$('#sum').textContent=tt.kinds?sumText(tt):'문구를 넣으면 수량이 표시됩니다';
   $('#applyAll').disabled=state.pens.length<2;
   $('#tgGuide').classList.toggle('on',showGuides);
-  $('#hint').innerHTML=(showGuides?'<i class="c1">┅ 인쇄 가능 영역</i>':'')+'<i>볼펜을 누르면 인쇄 위치가 바뀝니다</i>'}
+  $('#hint').innerHTML=(showGuides?'<i class="c1">┅ 인쇄 가능 영역</i>':'')+'<i>볼펜을 누르면 인쇄 위치가 바뀝니다</i><i>로고·이미지 인쇄는 따로 문의해 주세요</i>'}
 function refresh(){ensureFont(pen());syncUI();syncStrip();render()}
 function setField(k,v){if(pen()[k]===v)return;pen()[k]=v;commit();refresh()}
 
 $('#penSw').innerHTML=PEN_COLORS.map(c=>`<button data-c="${c.id}" title="${c.ko}" aria-label="${c.ko}" style="background:${c.hex}"></button>`).join('');
 $('#txtSw').innerHTML=TEXT_COLORS.map(c=>`<button data-c="${c.id}" title="${c.no}번 ${c.ko}" aria-label="${c.no}번 ${c.ko}" style="background:${c.hex}"></button>`).join('');
-$('#fontSeg').innerHTML=FONTS.map(f=>`<button data-f="${f.id}" style="font-family:'${f.fam}','Noto Sans KR',sans-serif;font-weight:${f.w}" title="${f.ko}">${f.label||f.ko}</button>`).join('');
+const fontBtns=g=>FONTS.filter(f=>f.g===g).map(f=>`<button data-f="${f.id}" style="font-family:'${f.fam}','Noto Sans KR',sans-serif;font-weight:${f.w}" title="${f.ko}">${f.label||f.ko}</button>`).join('');
+$('#fontOld').innerHTML=fontBtns('old');$('#fontNew').innerHTML=fontBtns('new');
 $('#posSeg').innerHTML=Object.keys(POS).map(k=>`<button data-p="${k}">${POS[k].ko}</button>`).join('');
-$('#spec').innerHTML=`인쇄 <b>옆면 한쪽 · 문구 1줄</b><br>인쇄 가능 영역(점선) <b>가로 ${ZONE.x1-ZONE.x0} × 세로 ${ZONE.h}mm</b><br>로고·이미지 인쇄는 따로 문의해 주세요.`;
 $('#size').min=SIZE.min;$('#size').max=SIZE.max;
 const pick=(sel,key,field)=>$(sel).addEventListener('click',e=>{const b=e.target.closest('button');if(b)setField(field,b.dataset[key])});
 pick('#penSw','c','color');pick('#txtSw','c','tcolor');pick('#fontSeg','f','font');pick('#posSeg','p','pos');
@@ -522,7 +541,7 @@ function openPreview(){const grid=$('#pvGrid'),t=totals();grid.innerHTML='';
   $('#pvConfirm').hidden=!t.kinds;
   $('#pv').hidden=false;document.body.style.overflow='hidden';$('#pvBody').scrollTop=0}
 function closePreview(){$('#pv').hidden=true;document.body.style.overflow=''}
-$('#tgPrev').onclick=openPreview;$('#pvBtn').onclick=openPreview;$('#saveBtn').onclick=openPreview;$('#pvClose').onclick=closePreview;
+$('#tgPrev').onclick=openPreview;$('#saveBtn').onclick=openPreview;$('#pvClose').onclick=closePreview;
 
 /* ---------- 내보내기 ---------- */
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
