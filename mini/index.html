@@ -387,7 +387,7 @@ const FONTS=[
 // 볼펜 모양(mm, 펜촉이 왼쪽): 알리바바 TL-140(몸통 길이 117mm). 나머지 치수는 상품 옆모습 사진의 윤곽을 픽셀 단위로 잰 값이다
 // L = 전체 길이(몸통 117 + 나온 펜촉 3), R = 몸통 반지름(지름 13.8mm), nib = 금속 펜촉 길이, seam = 앞·뒤 몸통 이음매,
 // sh = 몸통 끝(어깨), btnR = 노크 버튼 반지름, clipX0~clipX1 = 클립, clipT = 클립 두께, clipGap = 몸통과 클립 사이
-const PEN={L:120,R:6.9,nib:3,seam:58.9,sh:110.6,btnR:5,clipX0:68.6,clipX1:104.8,clipT:2,clipGap:1.8};
+const PEN={L:120,R:6.9,nib:3,seam:58.9,sh:110.6,btnR:5,clipX0:68.6,clipX1:104.8,clipT:2.5,clipGap:1.1};
 // 인쇄 영역(화면의 점선): 가로 46 × 세로 7mm. 이음매 뒤쪽 몸통(58.9~110.6mm, 클립이 달린 쪽)에만 인쇄한다. 펜촉 끝에서 x0~x1, 세로 h. pad = 앞·뒤 맞춤일 때 영역 끝에서 띄우는 여백
 const ZONE={x0:61.5,x1:107.5,h:7,pad:0};ZONE.w=ZONE.x1-ZONE.x0-ZONE.pad*2; // w = 문구가 차지할 수 있는 최대 폭
 // 인쇄 위치 = 인쇄 영역 안에서의 맞춤 (앞 = 펜촉 쪽 끝, 중간 = 가운데, 뒤 = 클립 쪽 끝)
@@ -488,32 +488,44 @@ function drawText(c,k,ox,oy,p){if(!hasText(p))return;const s=effSize(p),px=s*k,y
       if(v){const adv=px*ST.s*VW,q=px*ST.s*.46,P=new Path2D();P.addPath(v.path,new DOMMatrix([q,0,0,q,x+adv/2,cy]));c.fill(P);x+=adv;continue}
       c.font=r.e?emoCss(px):fontCss(fontOf(p),px);c.fillText(r.t,x,cy+px*.04);x+=c.measureText(r.t).width}});
   c.restore()}
-function drawPen(c,k,ox,oy,p,o={}){const pc=penCol(p),B=pc.hex,{L,R,nib,seam,sh,clipX0,clipX1,clipT,clipGap}=PEN,edge='rgba(0,0,0,.3)';
-  c.save();c.translate(ox,oy);c.scale(k,k);c.lineWidth=1/k;c.lineJoin='round';
-  // 클립(몸통 위쪽): 버튼 쪽 끝의 기둥으로 몸통에 붙어 있고, 펜촉 쪽 끝 안쪽에 작은 돌기 두 개가 있다
-  c.fillStyle=shade(B,-.1);c.strokeStyle=edge;
-  c.beginPath();c.rect(clipX1-7.6,-R-clipGap-.3,6.9,clipGap+.6);c.fill();c.stroke();
-  for(const [bx,by] of [[clipX0+4.6,-R-clipGap+.45],[clipX0+7,-R-.35]]){c.beginPath();c.arc(bx,by,.62,0,7);c.fill();c.stroke()}
-  c.beginPath();c.roundRect(clipX0,-R-clipGap-clipT,clipX1-clipX0,clipT,.7);c.fill();c.stroke();
+// 무광 플라스틱 원통의 명암: 위에서 빛이 와서 위쪽 1/4에 넓고 부드러운 하이라이트, 아래로 갈수록 어두워지고 맨 아래 가장자리만 살짝 반사광
+const CYL=[[0,'rgba(0,0,0,.10)'],[.09,'rgba(255,255,255,.06)'],[.25,'rgba(255,255,255,.40)'],[.4,'rgba(255,255,255,.08)'],[.6,'rgba(0,0,0,0)'],[.85,'rgba(0,0,0,.10)'],[.95,'rgba(0,0,0,.17)'],[1,'rgba(0,0,0,.07)']];
+function cyl(c,x0,x1,r){const g=c.createLinearGradient(0,-r,0,r);CYL.forEach(([t,v])=>g.addColorStop(t,v));c.fillStyle=g;c.fillRect(x0,-r,x1-x0,r*2)}
+// 클립(옆모습): 버튼 쪽 뿌리가 몸통에서 둥글게 솟아 나와 펜촉 쪽으로 납작한 판이 뻗고, 끝은 둥글다
+function clipPath(c){const {R,clipX0:a,clipX1:b,clipT:t,clipGap:g}=PEN,top=-R-g-t,bot=-R-g;c.beginPath();
+  c.moveTo(a+t/2,top);c.lineTo(b-2.2,top);c.bezierCurveTo(b+.4,top,b+1.3,top+.9,b+1.3,-R+.6);c.lineTo(b-6.2,-R+.6); // 위 선 → 뿌리 바깥쪽 곡선
+  c.bezierCurveTo(b-6.6,bot+.2,b-7.4,bot,b-8.6,bot);c.lineTo(a+t/2,bot);c.arc(a+t/2,top+t/2,t/2,Math.PI/2,Math.PI*1.5);c.closePath()} // 뿌리 안쪽 → 판 아래 선 → 둥근 끝
+function drawPen(c,k,ox,oy,p,o={}){const pc=penCol(p),B=pc.hex,{L,R,nib,seam,sh,btnR,clipX0,clipT,clipGap}=PEN,line='rgba(0,0,0,.16)';
+  c.save();c.translate(ox,oy);c.scale(k,k);c.lineWidth=.9/k;c.lineJoin='round';
+  if(o.shadow){c.save();c.filter=`blur(${Math.max(2,k*1.6)}px)`;c.fillStyle=isLight()?'rgba(70,50,20,.2)':'rgba(0,0,0,.5)'; // 바닥 그림자
+    c.beginPath();c.ellipse(L*.52,R*1.25,L*.46,R*.32,0,0,7);c.fill();c.restore()}
+  // 클립: 몸통보다 먼저 그려 뿌리가 몸통 뒤에서 나오게 한다
+  c.save();c.fillStyle=B;clipPath(c);c.fill();c.clip();
+  const cg=c.createLinearGradient(0,-R-clipGap-clipT,0,-R);cg.addColorStop(0,'rgba(255,255,255,.34)');cg.addColorStop(.45,'rgba(255,255,255,.05)');cg.addColorStop(1,'rgba(0,0,0,.12)');
+  c.fillStyle=cg;c.fillRect(clipX0,-R-clipGap-clipT,L,clipGap+clipT+1);c.restore();
+  c.strokeStyle=line;clipPath(c);c.stroke();
   // 금속 펜촉
-  c.fillStyle='#b4b7bf';c.beginPath();c.moveTo(0,-.25);c.lineTo(nib+.5,-1.1);c.lineTo(nib+.5,1.1);c.lineTo(0,.25);c.closePath();c.fill();c.stroke();
-  // 몸통
-  c.save();if(o.shadow){c.shadowColor=isLight()?'rgba(70,50,20,.3)':'rgba(0,0,0,.6)';c.shadowBlur=22;c.shadowOffsetY=9}
-  c.fillStyle=B;bodyPath(c);c.fill();c.restore();
+  const mg=c.createLinearGradient(0,-1.1,0,1.1);mg.addColorStop(0,'#eceef2');mg.addColorStop(.45,'#b9bdc6');mg.addColorStop(1,'#7d828d');
+  c.fillStyle=mg;c.beginPath();c.moveTo(0,-.22);c.quadraticCurveTo(nib*.5,-.55,nib+.6,-1.05);c.lineTo(nib+.6,1.05);c.quadraticCurveTo(nib*.5,.55,0,.22);c.closePath();c.fill();
+  // 몸통·버튼 바탕색
   c.save();bodyPath(c);c.clip();
-  if(pc.lo){c.fillStyle=pc.lo;c.fillRect(0,-R,seam,R*2)}          // 크리미: 앞 몸통은 흰색
-  c.fillStyle=shade(B,-.05);c.fillRect(sh,-R,L-sh,R*2);           // 노크 버튼: 조금 어둡게
-  const g=c.createLinearGradient(0,-R,0,R);g.addColorStop(0,'rgba(255,255,255,.3)');g.addColorStop(.3,'rgba(255,255,255,.08)');g.addColorStop(.6,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.17)');
-  c.fillStyle=g;c.fillRect(0,-R,L,R*2);                           // 원통의 둥근 느낌
-  c.fillStyle='rgba(0,0,0,.2)';c.fillRect(seam-.1,-R,.2,R*2);c.fillRect(sh-.1,-R,.2,R*2); // 몸통 이음매 · 버튼 경계
+  c.fillStyle=B;c.fillRect(0,-R,sh,R*2);if(pc.lo){c.fillStyle=pc.lo;c.fillRect(0,-R,seam,R*2)} // 크리미: 앞 몸통은 흰색
+  c.fillStyle=shade(B,-.04);c.fillRect(sh,-R,L-sh,R*2);
+  // 명암: 몸통과 버튼은 굵기가 달라 따로
+  cyl(c,0,sh,R);cyl(c,sh,L,btnR);
+  let g=c.createLinearGradient(nib,0,nib+16,0);g.addColorStop(0,'rgba(0,0,0,.12)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,-R,nib+16,R*2); // 앞코가 둥글게 말려 들어가는 그늘
+  g=c.createLinearGradient(sh-3,0,sh,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.08)');c.fillStyle=g;c.fillRect(sh-3,-R,3,R*2);         // 어깨 모서리
+  g=c.createLinearGradient(L-4.5,0,L,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.13)');c.fillStyle=g;c.fillRect(L-4.5,-R,4.5,R*2);      // 둥근 버튼 끝
+  // 이음매: 가는 그늘 선 + 바로 옆 빛 받는 선(살짝 파인 홈처럼)
+  for(const x of [seam,sh]){c.fillStyle='rgba(0,0,0,.17)';c.fillRect(x-.09,-R,.18,R*2);c.fillStyle='rgba(255,255,255,.28)';c.fillRect(x+.09,-R,.22,R*2)}
   c.restore();
-  c.strokeStyle=edge;bodyPath(c);c.stroke();
+  c.strokeStyle=line;bodyPath(c);c.stroke();
   c.restore();
   drawText(c,k,ox,oy,p)}
 function zoneRect(c,k,ox,oy){c.save();c.strokeStyle='#ff2d78';c.lineWidth=1.25;c.setLineDash([5,4]);
   c.strokeRect(ox+ZONE.x0*k,oy-ZONE.h/2*k,(ZONE.x1-ZONE.x0)*k,ZONE.h*k);c.restore()}
 // 인쇄 부분 확대 창: 인쇄 위치를 가운데에 두고 크게 보여 준다
-const ZH=PEN.R*2+7.5,PH=PEN.R*2+5;
+const ZH=PEN.R*2+9,PH=PEN.R*2+5;
 const zwOf=p=>Math.max(62,Math.min(PEN.L,(hasText(p)?textW(p,effSize(p)):0)+18)); // 확대 창의 가로 범위(mm): 문구가 길면 넓힌다 // 확대 창이 보여 주는 범위(mm) · 볼펜 한 자루가 차지하는 높이(mm)
 function drawZoom(c,p,x,y,w,h,zk,o={}){const ox=x+w/2-textCx(p)*zk,oy=y+h/2;
   c.save();c.beginPath();c.roundRect(x,y,w,h,14);c.fillStyle=isLight()?'rgba(255,255,255,.6)':'rgba(255,255,255,.07)';c.fill();c.clip();
